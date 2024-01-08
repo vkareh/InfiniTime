@@ -25,6 +25,8 @@ namespace Pinetime {
 
       bool IsRunning() const;
 
+      void ResetExpiredTime();
+
     private:
       TimerHandle_t timer;
       TickType_t expiry;
