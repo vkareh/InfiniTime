@@ -45,12 +45,12 @@ namespace Pinetime {
           {Symbols::batteryHalf, "Battery", Apps::BatteryInfo},
           {Symbols::clock, "Chimes", Apps::SettingChimes},
           {Symbols::tachometer, "Shake Calib.", Apps::SettingShakeThreshold},
-          {Symbols::check, "Firmware", Apps::FirmwareValidation},
+          {Symbols::wrench, "Widgets", Apps::SettingWidgets},
 
           {Symbols::wrench, "Auto Open", Apps::SettingAutoOpen},
           {Symbols::bluetooth, "Bluetooth", Apps::SettingBluetooth},
+          {Symbols::check, "Firmware", Apps::FirmwareValidation},
           {Symbols::list, "About", Apps::SysInfo},
-          {Symbols::none, "None", Apps::None},
 
           // {Symbols::none, "None", Apps::None},
 

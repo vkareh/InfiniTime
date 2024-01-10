@@ -38,6 +38,7 @@ namespace Pinetime {
       SettingHeartRate,
       SettingDisplay,
       SettingWakeUp,
+      SettingWidgets,
       SettingSteps,
       SettingSetDateTime,
       SettingChimes,
