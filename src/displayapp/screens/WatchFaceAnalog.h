@@ -19,6 +19,8 @@ namespace Pinetime {
     class Ble;
     class AlarmController;
     class NotificationManager;
+    class HeartRateController;
+    class MotionController;
   }
 
   namespace Applications {
@@ -31,8 +33,9 @@ namespace Pinetime {
                         const Controllers::Ble& bleController,
                         const Controllers::AlarmController& alarmController,
                         Controllers::NotificationManager& notificationManager,
-                        Controllers::Settings& settingsController);
-
+                        Controllers::Settings& settingsController,
+                        Controllers::HeartRateController& heartRateController,
+                        Controllers::MotionController& motionController);
         ~WatchFaceAnalog() override;
 
         void Refresh() override;
@@ -41,6 +44,9 @@ namespace Pinetime {
         uint8_t sHour, sMinute, sSecond;
 
         Utility::DirtyValue<std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>> currentDateTime;
+        Utility::DirtyValue<uint32_t> stepCount {};
+        Utility::DirtyValue<uint8_t> heartbeat {};
+        Utility::DirtyValue<bool> heartbeatRunning {};
         Utility::DirtyValue<bool> notificationState {false};
         Utility::DirtyValue<std::chrono::time_point<std::chrono::system_clock, std::chrono::days>> currentDate;
 
@@ -70,9 +76,16 @@ namespace Pinetime {
         lv_obj_t* label_date_day;
         lv_obj_t* notificationIcon;
 
+        lv_obj_t* heartbeatIcon;
+        lv_obj_t* heartbeatValue;
+        lv_obj_t* stepIcon;
+        lv_obj_t* stepValue;
+
         Controllers::DateTime& dateTimeController;
         Controllers::NotificationManager& notificationManager;
         Controllers::Settings& settingsController;
+        Controllers::HeartRateController& heartRateController;
+        Controllers::MotionController& motionController;
 
         void UpdateClock();
 
@@ -92,7 +105,9 @@ namespace Pinetime {
                                             controllers.bleController,
                                             controllers.alarmController,
                                             controllers.notificationManager,
-                                            controllers.settingsController);
+                                            controllers.settingsController,
+                                            controllers.heartRateController,
+                                            controllers.motionController);
       };
 
       static bool IsAvailable(Pinetime::Controllers::FS& /*filesystem*/) {
