@@ -6,10 +6,7 @@
 #include <memory>
 #include "displayapp/screens/Screen.h"
 #include "components/datetime/DateTimeController.h"
-#include "components/battery/BatteryController.h"
-#include "components/ble/BleController.h"
-#include "components/ble/NotificationManager.h"
-#include "displayapp/screens/BatteryIcon.h"
+#include "displayapp/widgets/StatusIcons.h"
 #include "utility/DirtyValue.h"
 
 namespace Pinetime {
@@ -38,9 +35,6 @@ namespace Pinetime {
       private:
         uint8_t sHour, sMinute, sSecond;
 
-        Utility::DirtyValue<uint8_t> batteryPercentRemaining {0};
-        Utility::DirtyValue<bool> isCharging {};
-        Utility::DirtyValue<bool> bleState {};
         Utility::DirtyValue<std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>> currentDateTime;
         Utility::DirtyValue<bool> notificationState {false};
         Utility::DirtyValue<std::chrono::time_point<std::chrono::system_clock, std::chrono::days>> currentDate;
@@ -69,22 +63,16 @@ namespace Pinetime {
         lv_style_t second_line_style;
 
         lv_obj_t* label_date_day;
-        lv_obj_t* plugIcon;
         lv_obj_t* notificationIcon;
-        lv_obj_t* bleIcon;
-
-        BatteryIcon batteryIcon;
 
         Controllers::DateTime& dateTimeController;
-        const Controllers::Battery& batteryController;
-        const Controllers::Ble& bleController;
         Controllers::NotificationManager& notificationManager;
         Controllers::Settings& settingsController;
 
         void UpdateClock();
-        void SetBatteryIcon();
 
         lv_task_t* taskRefresh;
+        Widgets::StatusIcons statusIcons;
       };
     }
 
