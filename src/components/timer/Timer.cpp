@@ -11,7 +11,7 @@ void Timer::StartTimer(std::chrono::milliseconds duration) {
   xTimerStart(timer, 0);
 }
 
-std::chrono::milliseconds Timer::GetTimeRemaining() {
+std::chrono::milliseconds Timer::GetTimeRemaining() const {
   TickType_t remainingTime = 0;
   if (IsRunning()) {
     remainingTime = xTimerGetExpiryTime(timer) - xTaskGetTickCount();
@@ -25,7 +25,7 @@ void Timer::StopTimer() {
   xTimerStop(timer, 0);
 }
 
-bool Timer::IsRunning() {
+bool Timer::IsRunning() const {
   return (xTimerIsTimerActive(timer) == pdTRUE);
 }
 
