@@ -16,7 +16,8 @@ namespace Pinetime {
       public:
         StatusIcons(const Controllers::Battery& batteryController,
                     const Controllers::Ble& bleController,
-                    const Controllers::AlarmController& alarmController);
+                    const Controllers::AlarmController& alarmController,
+                    const Controllers::Timer& timer);
         void Align();
         void Create();
 
@@ -31,12 +32,15 @@ namespace Pinetime {
         const Pinetime::Controllers::Battery& batteryController;
         const Controllers::Ble& bleController;
         const Controllers::AlarmController& alarmController;
+        const Controllers::Timer& timer;
 
         Utility::DirtyValue<uint8_t> batteryPercentRemaining {};
         Utility::DirtyValue<bool> powerPresent {};
         Utility::DirtyValue<bool> bleState {};
         Utility::DirtyValue<bool> bleRadioEnabled {};
 
+        lv_obj_t* timerIcon;
+        lv_obj_t* timeRemaining;
         lv_obj_t* bleIcon;
         lv_obj_t* alarmIcon;
         lv_obj_t* batteryPlug;
