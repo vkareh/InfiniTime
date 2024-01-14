@@ -30,7 +30,8 @@ namespace Pinetime {
                       const Controllers::Ble& bleController,
                       const Controllers::AlarmController& alarmController,
                       Controllers::DateTime& dateTimeController,
-                      std::array<Applications, 6>& applications);
+                      std::array<Applications, 6>& applications,
+                      Controllers::Timer& timer);
 
         ~Tile() override;
 

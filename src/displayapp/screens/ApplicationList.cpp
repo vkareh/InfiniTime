@@ -23,6 +23,7 @@ ApplicationList::ApplicationList(DisplayApp* app,
                                  const Pinetime::Controllers::Ble& bleController,
                                  const Pinetime::Controllers::AlarmController& alarmController,
                                  Controllers::DateTime& dateTimeController,
+                                 Controllers::Timer& timer,
                                  Pinetime::Controllers::FS& filesystem,
                                  std::array<Tile::Applications, UserAppTypes::Count>&& apps)
   : app {app},
@@ -31,6 +32,7 @@ ApplicationList::ApplicationList(DisplayApp* app,
     bleController {bleController},
     alarmController {alarmController},
     dateTimeController {dateTimeController},
+    timer {timer},
     filesystem {filesystem},
     apps {std::move(apps)},
     screens {app, settingsController.GetAppMenu(), CreateScreenList(), Screens::ScreenListModes::UpDown} {
@@ -63,5 +65,6 @@ std::unique_ptr<Screen> ApplicationList::CreateScreen(unsigned int screenNum) co
                                          bleController,
                                          alarmController,
                                          dateTimeController,
-                                         pageApps);
+                                         pageApps,
+                                         timer);
 }
