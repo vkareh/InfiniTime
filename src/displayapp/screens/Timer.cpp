@@ -106,11 +106,18 @@ void Timer::UpdateMask() {
 }
 
 void Timer::Refresh() {
-  if (motorController.IsRinging()) {
-    SetTimerRinging();
+  if (isRinging) {
     auto secondsElapsed = std::chrono::duration_cast<std::chrono::seconds>(timer.GetTimeRemaining());
     minuteCounter.SetValue(secondsElapsed.count() / 60);
     secondCounter.SetValue(secondsElapsed.count() % 60);
+    // Stop buzzing after 10 seconds, but continue the counter
+    if (motorController.IsRinging() && secondsElapsed.count() > 10) {
+      motorController.StopRinging();
+    }
+    // Reset timer after 1 minute
+    if (secondsElapsed.count() > 60) {
+      Reset();
+    }
   } else if (timer.IsRunning()) {
     DisplayTime();
   } else if (buttonPressing && xTaskGetTickCount() > pressTime + pdMS_TO_TICKS(150)) {
@@ -141,6 +148,7 @@ void Timer::SetTimerRunning() {
 }
 
 void Timer::SetTimerStopped() {
+  isRinging = false;
   minuteCounter.ShowControls();
   secondCounter.ShowControls();
   lv_label_set_text_static(txtPlayPause, "Start");
@@ -148,6 +156,7 @@ void Timer::SetTimerStopped() {
 }
 
 void Timer::SetTimerRinging() {
+  isRinging = true;
   minuteCounter.HideControls();
   secondCounter.HideControls();
   lv_label_set_text_static(txtPlayPause, "Reset");
@@ -158,7 +167,7 @@ void Timer::SetTimerRinging() {
 }
 
 void Timer::ToggleRunning() {
-  if (motorController.IsRinging()) {
+  if (isRinging) {
     motorController.StopRinging();
     Reset();
   } else if (timer.IsRunning()) {
