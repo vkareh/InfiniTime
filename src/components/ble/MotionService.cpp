@@ -20,6 +20,7 @@ namespace {
   constexpr ble_uuid128_t motionServiceUuid {BaseUuid()};
   constexpr ble_uuid128_t stepCountCharUuid {CharUuid(0x01, 0x00)};
   constexpr ble_uuid128_t motionValuesCharUuid {CharUuid(0x02, 0x00)};
+  constexpr ble_uuid128_t sleepValuesCharUuid {CharUuid(0x03, 0x00)};
 
   int MotionServiceCallback(uint16_t /*conn_handle*/, uint16_t attr_handle, struct ble_gatt_access_ctxt* ctxt, void* arg) {
     auto* motionService = static_cast<MotionService*>(arg);
@@ -41,6 +42,11 @@ MotionService::MotionService(NimbleController& nimble, Controllers::MotionContro
                                .arg = this,
                                .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
                                .val_handle = &motionValuesHandle},
+                              {.uuid = &sleepValuesCharUuid.u,
+                               .access_cb = MotionServiceCallback,
+                               .arg = this,
+                               .flags = BLE_GATT_CHR_F_READ | BLE_GATT_CHR_F_NOTIFY,
+                               .val_handle = &sleepValuesHandle},
                               {0}},
     serviceDefinition {
       {.type = BLE_GATT_SVC_TYPE_PRIMARY, .uuid = &motionServiceUuid.u, .characteristics = characteristicDefinition},
@@ -70,6 +76,11 @@ int MotionService::OnStepCountRequested(uint16_t attributeHandle, ble_gatt_acces
     int16_t buffer[3] = {motionController.X(), motionController.Y(), motionController.Z()};
 
     int res = os_mbuf_append(context->om, buffer, 3 * sizeof(int16_t));
+    return (res == 0) ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
+  } else if (attributeHandle == sleepValuesHandle) {
+    bool buffer = motionController.SleepValue();
+
+    int res = os_mbuf_append(context->om, &buffer, 1);
     return (res == 0) ? 0 : BLE_ATT_ERR_INSUFFICIENT_RES;
   }
   return 0;
@@ -107,11 +118,29 @@ void MotionService::OnNewMotionValues(int16_t x, int16_t y, int16_t z) {
   ble_gattc_notify_custom(connectionHandle, motionValuesHandle, om);
 }
 
+void MotionService::OnNewSleepValues(bool sleepValue) {
+  if (!sleepValuesNoficationEnabled)
+    return;
+
+  bool buffer = sleepValue;
+  auto* om = ble_hs_mbuf_from_flat(&buffer, 1);
+
+  uint16_t connectionHandle = nimble.connHandle();
+
+  if (connectionHandle == 0 || connectionHandle == BLE_HS_CONN_HANDLE_NONE) {
+    return;
+  }
+
+  ble_gattc_notify_custom(connectionHandle, sleepValuesHandle, om);
+}
+
 void MotionService::SubscribeNotification(uint16_t attributeHandle) {
   if (attributeHandle == stepCountHandle)
     stepCountNoficationEnabled = true;
   else if (attributeHandle == motionValuesHandle)
     motionValuesNoficationEnabled = true;
+  else if (attributeHandle == sleepValuesHandle)
+    sleepValuesNoficationEnabled = true;
 }
 
 void MotionService::UnsubscribeNotification(uint16_t attributeHandle) {
@@ -119,6 +148,8 @@ void MotionService::UnsubscribeNotification(uint16_t attributeHandle) {
     stepCountNoficationEnabled = false;
   else if (attributeHandle == motionValuesHandle)
     motionValuesNoficationEnabled = false;
+  else if (attributeHandle == sleepValuesHandle)
+    sleepValuesNoficationEnabled = false;
 }
 
 bool MotionService::IsMotionNotificationSubscribed() const {
