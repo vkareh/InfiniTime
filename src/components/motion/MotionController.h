@@ -32,6 +32,10 @@ namespace Pinetime {
         return zHistory[0];
       }
 
+      bool SleepValue() const {
+        return sleepValue;
+      }
+
       uint32_t NbSteps() const {
         return nbSteps;
       }
@@ -69,6 +73,8 @@ namespace Pinetime {
     private:
       uint32_t nbSteps = 0;
       uint32_t currentTripSteps = 0;
+
+      bool sleepValue = 0;
 
       TickType_t lastTime = 0;
       TickType_t time = 0;
