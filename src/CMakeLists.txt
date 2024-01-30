@@ -389,6 +389,7 @@ list(APPEND SOURCE_FILES
         displayapp/screens/FlashLight.cpp
         displayapp/screens/List.cpp
         displayapp/screens/CheckboxList.cpp
+        displayapp/screens/RadioList.cpp
         displayapp/screens/BatteryInfo.cpp
         displayapp/screens/Steps.cpp
         displayapp/screens/Timer.cpp
@@ -611,6 +612,7 @@ set(INCLUDE_FILES
         displayapp/screens/FirmwareValidation.h
         displayapp/screens/ApplicationList.h
         displayapp/screens/CheckboxList.h
+        displayapp/screens/RadioList.h
         displayapp/Apps.h
         displayapp/screens/Notifications.h
         displayapp/screens/HeartRate.h
