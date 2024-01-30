@@ -1,6 +1,4 @@
-#include "displayapp/DisplayApp.h"
 #include "displayapp/screens/CheckboxList.h"
-#include "displayapp/screens/Styles.h"
 
 using namespace Pinetime::Applications::Screens;
 
@@ -23,6 +21,13 @@ CheckboxList::CheckboxList(const uint8_t screenID,
     options {options},
     value {originalValue},
     pageIndicator(screenID, numScreens) {
+  RenderScreen(numScreens, optionsTitle, optionsSymbol);
+  RenderOptions(screenID, originalValue, options);
+}
+
+void CheckboxList::RenderScreen(const uint8_t numScreens,
+                                const char* optionsTitle,
+                                const char* optionsSymbol) {
   // Set the background to Black
   lv_obj_set_style_local_bg_color(lv_scr_act(), LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
 
@@ -30,7 +35,7 @@ CheckboxList::CheckboxList(const uint8_t screenID,
     pageIndicator.Create();
   }
 
-  lv_obj_t* container1 = lv_cont_create(lv_scr_act(), nullptr);
+  container1 = lv_cont_create(lv_scr_act(), nullptr);
 
   lv_obj_set_style_local_bg_opa(container1, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
   lv_obj_set_style_local_pad_all(container1, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
@@ -52,7 +57,11 @@ CheckboxList::CheckboxList(const uint8_t screenID,
   lv_label_set_text_static(icon, optionsSymbol);
   lv_label_set_align(icon, LV_LABEL_ALIGN_CENTER);
   lv_obj_align(icon, title, LV_ALIGN_OUT_LEFT_MID, -10, 0);
+}
 
+void CheckboxList::RenderOptions(const uint8_t screenID,
+                                 uint32_t originalValue,
+                                 std::array<Item, MaxItems> options) {
   for (unsigned int i = 0; i < options.size(); i++) {
     if (strcmp(options[i].name, "")) {
       cbOption[i] = lv_checkbox_create(container1, nullptr);
@@ -62,7 +71,6 @@ CheckboxList::CheckboxList(const uint8_t screenID,
       }
       cbOption[i]->user_data = this;
       lv_obj_set_event_cb(cbOption[i], event_handler);
-      SetRadioButtonStyle(cbOption[i]);
 
       if (static_cast<unsigned int>(originalValue - MaxItems * screenID) == i) {
         lv_checkbox_set_checked(cbOption[i], true);
@@ -83,8 +91,6 @@ void CheckboxList::UpdateSelected(lv_obj_t* object, lv_event_t event) {
         if (object == cbOption[i]) {
           lv_checkbox_set_checked(cbOption[i], true);
           value = MaxItems * screenID + i;
-        } else {
-          lv_checkbox_set_checked(cbOption[i], false);
         }
         if (!options[i].enabled) {
           lv_checkbox_set_disabled(cbOption[i]);
