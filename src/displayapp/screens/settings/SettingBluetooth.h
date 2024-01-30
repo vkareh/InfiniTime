@@ -6,7 +6,7 @@
 
 #include "components/settings/Settings.h"
 #include "displayapp/screens/Screen.h"
-#include "displayapp/screens/CheckboxList.h"
+#include "displayapp/screens/RadioList.h"
 
 namespace Pinetime {
 
@@ -21,7 +21,7 @@ namespace Pinetime {
       private:
         DisplayApp* app;
         Pinetime::Controllers::Settings& settings;
-        CheckboxList checkboxList;
+        RadioList radioList;
       };
     }
   }
