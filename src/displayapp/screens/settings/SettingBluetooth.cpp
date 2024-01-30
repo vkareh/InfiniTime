@@ -5,6 +5,7 @@
 #include "displayapp/screens/Styles.h"
 #include "displayapp/screens/Screen.h"
 #include "displayapp/screens/Symbols.h"
+#include "displayapp/screens/RadioList.h"
 
 using namespace Pinetime::Applications::Screens;
 
@@ -19,9 +20,9 @@ namespace {
     {"Disabled", false},
   }};
 
-  std::array<CheckboxList::Item, CheckboxList::MaxItems> CreateOptionArray() {
-    std::array<Pinetime::Applications::Screens::CheckboxList::Item, CheckboxList::MaxItems> optionArray;
-    for (size_t i = 0; i < CheckboxList::MaxItems; i++) {
+  std::array<RadioList::Item, RadioList::MaxItems> CreateOptionArray() {
+    std::array<Pinetime::Applications::Screens::RadioList::Item, RadioList::MaxItems> optionArray;
+    for (size_t i = 0; i < RadioList::MaxItems; i++) {
       if (i >= options.size()) {
         optionArray[i].name = "";
         optionArray[i].enabled = false;
@@ -37,7 +38,7 @@ namespace {
 SettingBluetooth::SettingBluetooth(Pinetime::Applications::DisplayApp* app, Pinetime::Controllers::Settings& settingsController)
   : app {app},
     settings {settingsController},
-    checkboxList(
+    radioList(
       0,
       1,
       "Bluetooth",
