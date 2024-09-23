@@ -328,7 +328,7 @@ namespace Pinetime {
       struct SettingsData {
         uint32_t version = settingsVersion;
         uint32_t stepsGoal = 10000;
-        uint32_t screenTimeOut = 15000;
+        uint32_t screenTimeOut = 10000;
 
         bool alwaysOnDisplay = false;
 
@@ -343,12 +343,12 @@ namespace Pinetime {
 
         WatchFaceInfineat watchFaceInfineat;
 
-        std::bitset<5> wakeUpMode {0};
-        uint16_t shakeWakeThreshold = 150;
+        std::bitset<5> wakeUpMode {0b10110};
+        uint16_t shakeWakeThreshold = 16;
 
-        Controllers::BrightnessController::Levels brightLevel = Controllers::BrightnessController::Levels::Medium;
+        Controllers::BrightnessController::Levels brightLevel = Controllers::BrightnessController::Levels::Low;
 
-        HeartRateBackgroundMeasurementInterval heartRateBackgroundMeasurementInterval = HeartRateBackgroundMeasurementInterval::Off;
+        HeartRateBackgroundMeasurementInterval heartRateBackgroundMeasurementInterval = HeartRateBackgroundMeasurementInterval::FiveMinutes;
       };
 
       SettingsData settings;

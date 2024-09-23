@@ -64,7 +64,7 @@ namespace Pinetime {
 
       TaskHandle_t taskHandle;
       QueueHandle_t messageQueue;
-      States state = States::ScreenOnAndStopped;
+      States state = States::ScreenOnAndMeasuring;
       Drivers::Hrs3300& heartRateSensor;
       Controllers::HeartRateController& controller;
       Controllers::Settings& settings;

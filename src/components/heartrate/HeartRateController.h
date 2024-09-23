@@ -36,7 +36,7 @@ namespace Pinetime {
 
     private:
       Applications::HeartRateTask* task = nullptr;
-      States state = States::Stopped;
+      States state = States::Running;
       uint8_t heartRate = 0;
       Pinetime::Controllers::HeartRateService* service = nullptr;
     };
