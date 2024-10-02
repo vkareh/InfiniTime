@@ -19,6 +19,9 @@ namespace Pinetime {
 
         bool OnTouchEvent(Pinetime::Applications::TouchEvents event) override;
         void Toggle();
+        void ToggleColor(lv_color_t color);
+
+        //void SetFlashlightColor(lv_color_t color);
 
       private:
         void SetIndicators();
@@ -31,6 +34,8 @@ namespace Pinetime {
         Controllers::BrightnessController::Levels previousBrightnessLevel;
 
         lv_obj_t* flashLight;
+        lv_obj_t* whiteButton;
+        lv_obj_t* redButton;
         lv_obj_t* backgroundAction;
         lv_obj_t* indicators[3];
         bool isOn = false;
