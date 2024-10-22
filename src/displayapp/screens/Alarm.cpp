@@ -39,16 +39,15 @@ static void btnEventHandler(lv_obj_t* obj, lv_event_t event) {
   screen->OnButtonEvent(obj, event);
 }
 
-static void StopAlarmTaskCallback(lv_task_t* task) {
-  auto* screen = static_cast<Alarm*>(task->user_data);
-  screen->StopAlerting();
-}
-
 Alarm::Alarm(Controllers::AlarmController& alarmController,
              Controllers::Settings::ClockType clockType,
              System::SystemTask& systemTask,
-             Controllers::MotorController& motorController)
-  : alarmController {alarmController}, wakeLock(systemTask), motorController {motorController} {
+             Controllers::MotorController& motorController,
+             Controllers::Settings& settingsController)
+  : alarmController {alarmController},
+    wakeLock(systemTask),
+    motorController {motorController},
+    settingsController {settingsController} {
 
   hourCounter.Create();
   lv_obj_align(hourCounter.GetObject(), nullptr, LV_ALIGN_IN_TOP_LEFT, 0, 0);
@@ -249,7 +248,6 @@ void Alarm::SetAlerting() {
   hourCounter.HideControls();
   minuteCounter.HideControls();
   lv_obj_set_hidden(btnStop, false);
-  taskStopAlarm = lv_task_create(StopAlarmTaskCallback, pdMS_TO_TICKS(60 * 1000), LV_TASK_PRIO_MID, this);
   motorController.StartRinging();
   wakeLock.Lock();
 }
@@ -258,10 +256,6 @@ void Alarm::StopAlerting() {
   alarmController.StopAlerting();
   motorController.StopRinging();
   SetSwitchState(LV_ANIM_OFF);
-  if (taskStopAlarm != nullptr) {
-    lv_task_del(taskStopAlarm);
-    taskStopAlarm = nullptr;
-  }
   wakeLock.Release();
   lv_obj_set_hidden(btnStop, true);
   hourCounter.ShowControls();
@@ -269,6 +263,11 @@ void Alarm::StopAlerting() {
   lv_obj_set_hidden(btnInfo, false);
   lv_obj_set_hidden(btnRecur, false);
   lv_obj_set_hidden(enableSwitch, false);
+
+  // Move out of sleep mode
+  if (settingsController.GetNotificationStatus() == Controllers::Settings::Notification::Sleep) {
+    settingsController.SetNotificationStatus(Controllers::Settings::Notification::On);
+  }
 }
 
 void Alarm::SetSwitchState(lv_anim_enable_t anim) {
