@@ -88,7 +88,7 @@ Tile::Tile(uint8_t screenID,
   btnm1->user_data = this;
   lv_obj_set_event_cb(btnm1, event_handler);
 
-  taskUpdate = lv_task_create(lv_update_task, 5000, LV_TASK_PRIO_MID, this);
+  taskUpdate = lv_task_create(lv_update_task, 500, LV_TASK_PRIO_MID, this);
 
   UpdateScreen();
 }
