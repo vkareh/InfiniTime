@@ -73,7 +73,7 @@ namespace Pinetime {
         uint8_t version = alarmFormatVersion;
         uint8_t hours = 7;
         uint8_t minutes = 0;
-        RecurType recurrence = RecurType::None;
+        RecurType recurrence = RecurType::Weekdays;
         bool isEnabled = false;
       };
 
