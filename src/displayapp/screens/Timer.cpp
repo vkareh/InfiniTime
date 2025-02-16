@@ -152,6 +152,7 @@ void Timer::SetTimerRunning() {
 }
 
 void Timer::SetTimerStopped() {
+  wakeLock.Release();
   isRinging = false;
   minuteCounter.ShowControls();
   secondCounter.ShowControls();
