@@ -12,6 +12,7 @@
 #include "components/heartrate/HeartRateController.h"
 #include "components/motion/MotionController.h"
 #include "components/ble/SimpleWeatherService.h"
+#include "components/ble/MusicService.h"
 #include "components/settings/Settings.h"
 
 using namespace Pinetime::Applications::Screens;
@@ -25,7 +26,8 @@ WatchFaceDigital::WatchFaceDigital(Controllers::DateTime& dateTimeController,
                                    Controllers::Settings& settingsController,
                                    Controllers::HeartRateController& heartRateController,
                                    Controllers::MotionController& motionController,
-                                   Controllers::SimpleWeatherService& weatherService)
+                                   Controllers::SimpleWeatherService& weatherService,
+                                   Controllers::MusicService& musicService)
   : currentDateTime {{}},
     dateTimeController {dateTimeController},
     notificationManager {notificationManager},
@@ -33,6 +35,7 @@ WatchFaceDigital::WatchFaceDigital(Controllers::DateTime& dateTimeController,
     heartRateController {heartRateController},
     motionController {motionController},
     weatherService {weatherService},
+    musicService {musicService},
     statusIcons(batteryController, bleController, alarmController, timer) {
 
   statusIcons.Create();
@@ -46,13 +49,20 @@ WatchFaceDigital::WatchFaceDigital(Controllers::DateTime& dateTimeController,
   lv_obj_set_style_local_text_color(weatherIcon, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
   lv_obj_set_style_local_text_font(weatherIcon, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &fontawesome_weathericons);
   lv_label_set_text(weatherIcon, "");
-  lv_obj_align(weatherIcon, nullptr, LV_ALIGN_IN_TOP_MID, -20, 50);
+  lv_obj_align(weatherIcon, nullptr, LV_ALIGN_IN_TOP_MID, -20, 40);
   lv_obj_set_auto_realign(weatherIcon, true);
 
   temperature = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_set_style_local_text_color(temperature, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
   lv_label_set_text(temperature, "");
-  lv_obj_align(temperature, nullptr, LV_ALIGN_IN_TOP_MID, 20, 50);
+  lv_obj_align(temperature, nullptr, LV_ALIGN_IN_TOP_MID, 20, 40);
+
+  label_music = lv_label_create(lv_scr_act(), nullptr);
+  lv_label_set_long_mode(label_music, LV_LABEL_LONG_SROLL_CIRC);
+  lv_obj_set_width(label_music, LV_HOR_RES - 12);
+  lv_obj_align(label_music, lv_scr_act(), LV_ALIGN_CENTER, 0, 50);
+  lv_obj_set_style_local_text_color(label_music, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_color_hex(0x999999));
+  lv_obj_set_hidden(label_music, true);
 
   label_date = lv_label_create(lv_scr_act(), nullptr);
   lv_obj_align(label_date, lv_scr_act(), LV_ALIGN_CENTER, 0, 60);
@@ -149,6 +159,18 @@ void WatchFaceDigital::Refresh() {
       }
       lv_obj_realign(label_date);
     }
+  }
+
+  // lv_obj_set_hidden(label_date, musicService.isPlaying());
+  if (musicService.isPlaying()) {
+    lv_label_set_text_fmt(label_music, "%s %s %s", Symbols::music, musicService.getArtist().data(), musicService.getTrack().data());
+    lv_obj_set_hidden(label_music, false);
+    lv_obj_realign(label_music);
+    lv_obj_align(label_date, lv_scr_act(), LV_ALIGN_CENTER, 0, 80);
+  } else {
+    lv_obj_set_hidden(label_music, true);
+    lv_obj_realign(label_music);
+    lv_obj_align(label_date, lv_scr_act(), LV_ALIGN_CENTER, 0, 60);
   }
 
   heartbeat = heartRateController.HeartRate();

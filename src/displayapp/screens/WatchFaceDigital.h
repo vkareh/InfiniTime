@@ -21,6 +21,7 @@ namespace Pinetime {
     class NotificationManager;
     class HeartRateController;
     class MotionController;
+    class MusicService;
     class Timer;
   }
 
@@ -38,7 +39,8 @@ namespace Pinetime {
                          Controllers::Settings& settingsController,
                          Controllers::HeartRateController& heartRateController,
                          Controllers::MotionController& motionController,
-                         Controllers::SimpleWeatherService& weather);
+                         Controllers::SimpleWeatherService& weather,
+                         Controllers::MusicService& music);
         ~WatchFaceDigital() override;
 
         void Refresh() override;
@@ -59,6 +61,7 @@ namespace Pinetime {
         lv_obj_t* label_time;
         lv_obj_t* label_time_ampm;
         lv_obj_t* label_date;
+        lv_obj_t* label_music;
         lv_obj_t* heartbeatIcon;
         lv_obj_t* heartbeatValue;
         lv_obj_t* stepIcon;
@@ -73,6 +76,7 @@ namespace Pinetime {
         Controllers::HeartRateController& heartRateController;
         Controllers::MotionController& motionController;
         Controllers::SimpleWeatherService& weatherService;
+        Controllers::MusicService& musicService;
 
         lv_task_t* taskRefresh;
         Widgets::StatusIcons statusIcons;
@@ -94,7 +98,8 @@ namespace Pinetime {
                                              controllers.settingsController,
                                              controllers.heartRateController,
                                              controllers.motionController,
-                                             *controllers.weatherController);
+                                             *controllers.weatherController,
+                                             *controllers.musicService);
       };
 
       static bool IsAvailable(Pinetime::Controllers::FS& /*filesystem*/) {
