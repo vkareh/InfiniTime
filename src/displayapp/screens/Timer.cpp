@@ -88,7 +88,7 @@ void Timer::MaskReset() {
   buttonPressing = false;
   // A click event is processed before a release event,
   // so the release event would override the "Pause" text without this check
-  if (!timer.IsRunning()) {
+  if (!timer.IsRunning() && !isRinging) {
     lv_label_set_text_static(txtPlayPause, "Start");
   }
   maskPosition = 0;
