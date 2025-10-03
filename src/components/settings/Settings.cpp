@@ -45,3 +45,34 @@ void Settings::SaveSettingsToFile() {
   fs.FileWrite(&settingsFile, reinterpret_cast<uint8_t*>(&settings), sizeof(settings));
   fs.FileClose(&settingsFile);
 }
+
+void Settings::AddTimerDuration(uint32_t duration) {
+  // Search for existing duration in array
+  int existingIndex = -1;
+  for (int i = 0; i < 3; i++) {
+    if (settings.lastTimerDurations[i] == duration) {
+      existingIndex = i;
+      break;
+    }
+  }
+
+  // If duration already exists, move it to front
+  if (existingIndex >= 0) {
+    if (existingIndex == 0) {
+      // Already at front, no change needed
+      return;
+    }
+    // Shift elements before existingIndex forward by one
+    for (int i = existingIndex; i > 0; i--) {
+      settings.lastTimerDurations[i] = settings.lastTimerDurations[i - 1];
+    }
+    settings.lastTimerDurations[0] = duration;
+  } else {
+    // New duration - shift all down and insert at front
+    settings.lastTimerDurations[2] = settings.lastTimerDurations[1];
+    settings.lastTimerDurations[1] = settings.lastTimerDurations[0];
+    settings.lastTimerDurations[0] = duration;
+  }
+
+  settingsChanged = true;
+}

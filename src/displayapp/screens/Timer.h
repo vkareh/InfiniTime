@@ -9,13 +9,14 @@
 #include <lvgl/lvgl.h>
 
 #include "components/timer/Timer.h"
+#include "components/settings/Settings.h"
 #include "Symbols.h"
 
 namespace Pinetime::Applications {
   namespace Screens {
     class Timer : public Screen {
     public:
-      Timer(Controllers::Timer& timerController, Controllers::MotorController& motorController);
+      Timer(Controllers::Timer& timerController, Controllers::MotorController& motorController, Controllers::Settings& settingsController);
       ~Timer() override;
       void Refresh() override;
       void Reset();
@@ -23,14 +24,32 @@ namespace Pinetime::Applications {
       void ButtonPressed();
       void MaskReset();
       void SetTimerRinging();
+      void OnLauncherButtonClicked(lv_obj_t* obj);
+
+      bool launcherMode = true;
 
     private:
       void SetTimerRunning();
       void SetTimerStopped();
       void UpdateMask();
       void DisplayTime();
+      void CreateLauncherUI();
+      void CreateTimerUI(uint32_t startDurationMs, bool autoStart);
+
       Pinetime::Controllers::Timer& timer;
       Pinetime::Controllers::MotorController& motorController;
+      Pinetime::Controllers::Settings& settingsController;
+
+      // Launcher UI elements
+      lv_obj_t* btnRecent1 = nullptr;
+      lv_obj_t* btnRecent2 = nullptr;
+      lv_obj_t* btnRecent3 = nullptr;
+      lv_obj_t* btnCustom = nullptr;
+      lv_obj_t* labelRecent1 = nullptr;
+      lv_obj_t* labelRecent2 = nullptr;
+      lv_obj_t* labelRecent3 = nullptr;
+      lv_obj_t* labelCustom = nullptr;
+      lv_style_t btnStyle;
 
       lv_obj_t* btnPlayPause;
       lv_obj_t* txtPlayPause;
@@ -58,7 +77,7 @@ namespace Pinetime::Applications {
     static constexpr const char* icon = Screens::Symbols::hourGlass;
 
     static Screens::Screen* Create(AppControllers& controllers) {
-      return new Screens::Timer(controllers.timer, controllers.motorController);
+      return new Screens::Timer(controllers.timer, controllers.motorController, controllers.settingsController);
     };
 
     static bool IsAvailable(Pinetime::Controllers::FS& /*filesystem*/) {

@@ -305,6 +305,15 @@ namespace Pinetime {
         return settings.stepsGoal;
       };
 
+      uint32_t GetLastTimerDuration(uint8_t index) const {
+        if (index >= 3) {
+          return settings.lastTimerDurations[0];
+        }
+        return settings.lastTimerDurations[index];
+      };
+
+      void AddTimerDuration(uint32_t duration);
+
       void SetBleRadioEnabled(bool enabled) {
         bleRadioEnabled = enabled;
       };
@@ -383,6 +392,8 @@ namespace Pinetime {
 
         bool dfuAndFsEnabledOnBoot = false;
         uint16_t heartRateBackgroundPeriod = std::numeric_limits<uint16_t>::max(); // Disabled by default
+
+        uint32_t lastTimerDurations[3] = {300000, 600000, 900000};
       };
 
       SettingsData settings;
