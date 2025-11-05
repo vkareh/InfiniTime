@@ -145,8 +145,16 @@ int Pinetime::Controllers::MusicService::OnCommand(struct ble_gatt_access_ctxt* 
     char* s = &data[0];
     if (ble_uuid_cmp(ctxt->chr->uuid, &msArtistCharUuid.u) == 0) {
       artistName = s;
+      // If artist name is cleared, assume media is no longer playing
+      if (artistName.empty()) {
+        playing = false;
+      }
     } else if (ble_uuid_cmp(ctxt->chr->uuid, &msTrackCharUuid.u) == 0) {
       trackName = s;
+      // If track name is cleared, assume media is no longer playing
+      if (trackName.empty()) {
+        playing = false;
+      }
     } else if (ble_uuid_cmp(ctxt->chr->uuid, &msAlbumCharUuid.u) == 0) {
       albumName = s;
     } else if (ble_uuid_cmp(ctxt->chr->uuid, &msStatusCharUuid.u) == 0) {
