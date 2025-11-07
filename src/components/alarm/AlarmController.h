@@ -42,7 +42,6 @@ namespace Pinetime {
       void SetOffAlarmNow();
       uint32_t SecondsToAlarm() const;
       void StopAlerting();
-      enum class RecurType { None, Daily, Weekdays };
 
       uint8_t Hours(uint8_t index) const {
         if (index >= MaxAlarms) {
@@ -84,25 +83,40 @@ namespace Pinetime {
 
       void SetEnabled(uint8_t index, bool enabled);
 
-      RecurType Recurrence(uint8_t index) const {
+      uint8_t GetRecurDays(uint8_t index) const {
         if (index >= MaxAlarms) {
-          return RecurType::None;
+          return 0;
         }
-        return alarms[index].recurrence;
+        return alarms[index].recurDays;
       }
 
-      void SetRecurrence(uint8_t index, RecurType recurrence);
+      void SetRecurDays(uint8_t index, uint8_t days) {
+        if (index >= MaxAlarms) {
+          return;
+        }
+        if (alarms[index].recurDays != days) {
+          alarms[index].recurDays = days;
+          alarmChanged = true;
+        }
+      }
+
+      bool IsRecurDaySet(uint8_t index, uint8_t dayOfWeek) const {
+        if (index >= MaxAlarms || dayOfWeek > 6) {
+          return false;
+        }
+        return (alarms[index].recurDays & (1 << dayOfWeek)) != 0;
+      }
 
     private:
       // Versions 255 is reserved for now, so the version field can be made
       // bigger, should it ever be needed.
-      static constexpr uint8_t alarmFormatVersion = 2;
+      static constexpr uint8_t alarmFormatVersion = 3;
 
       struct AlarmSettings {
         uint8_t version = alarmFormatVersion;
         uint8_t hours = 7;
         uint8_t minutes = 0;
-        RecurType recurrence = RecurType::Weekdays;
+        uint8_t recurDays = 0x00; // Bitmask: bit 0=Sun, bit 6=Sat (default Once)
         bool isEnabled = false;
       };
 
@@ -121,6 +135,7 @@ namespace Pinetime {
       void LoadSettingsFromFile();
       void SaveSettingsToFile() const;
       uint8_t CalculateNextAlarm() const;
+      void AdjustForRecurringDays(tm* tmAlarmTime, uint8_t recurDays) const;
     };
   }
 }
