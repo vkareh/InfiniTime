@@ -31,7 +31,7 @@ AlarmController::AlarmController(Controllers::DateTime& dateTimeController, Cont
     alarms[i].version = alarmFormatVersion;
     alarms[i].hours = 6 + i;
     alarms[i].minutes = 0;
-    alarms[i].recurrence = RecurType::Weekdays;
+    alarms[i].recurDays = 0x00; // Once
     alarms[i].isEnabled = false;
   }
 }
@@ -104,15 +104,8 @@ void AlarmController::ScheduleAlarm() {
   tmAlarmTime->tm_min = alarms[nextAlarmIndex].minutes;
   tmAlarmTime->tm_sec = 0;
 
-  // if alarm is in weekday-only mode, make sure it shifts to the next weekday
-  if (alarms[nextAlarmIndex].recurrence == RecurType::Weekdays) {
-    if (tmAlarmTime->tm_wday == 0) { // Sunday, shift 1 day
-      tmAlarmTime->tm_mday += 1;
-    } else if (tmAlarmTime->tm_wday == 6) { // Saturday, shift 2 days
-      tmAlarmTime->tm_mday += 2;
-    }
-  }
-  tmAlarmTime->tm_isdst = -1; // use system timezone setting to determine DST
+  AdjustForRecurringDays(tmAlarmTime, alarms[nextAlarmIndex].recurDays);
+  tmAlarmTime->tm_isdst = -1;
 
   // now can convert back to a time_point
   alarmTime = std::chrono::system_clock::from_time_t(std::mktime(tmAlarmTime));
@@ -155,23 +148,14 @@ void AlarmController::SetOffAlarmNow() {
 
 void AlarmController::StopAlerting() {
   isAlerting = false;
-  // Disable alarm unless it is recurring
-  if (alarms[alertingAlarmIndex].recurrence == RecurType::None) {
+  // Disable alarm if no days are set (one-time alarm)
+  if (alarms[alertingAlarmIndex].recurDays == 0x00) {
     alarms[alertingAlarmIndex].isEnabled = false;
     alarmChanged = true;
   }
   ScheduleAlarm();
 }
 
-void AlarmController::SetRecurrence(uint8_t index, RecurType recurrence) {
-  if (index >= MaxAlarms) {
-    return;
-  }
-  if (alarms[index].recurrence != recurrence) {
-    alarms[index].recurrence = recurrence;
-    alarmChanged = true;
-  }
-}
 
 void AlarmController::LoadSettingsFromFile() {
   lfs_file_t alarmFile;
@@ -187,27 +171,90 @@ void AlarmController::LoadSettingsFromFile() {
   fs.FileSeek(&alarmFile, 0);
 
   if (version == 1) {
+    // Old RecurType enum for version 1 & 2
+    enum class RecurType : uint8_t { None, Daily, Weekdays };
+    struct AlarmSettingsV1 {
+      uint8_t version;
+      uint8_t hours;
+      uint8_t minutes;
+      RecurType recurrence;
+      bool isEnabled;
+    };
+
     // Migrate from old single-alarm format
-    NRF_LOG_INFO("[AlarmController] Migrating from version 1 to version 2");
-    AlarmSettings oldAlarm;
+    NRF_LOG_INFO("[AlarmController] Migrating from version 1 to version 3");
+    AlarmSettingsV1 oldAlarm;
     fs.FileRead(&alarmFile, reinterpret_cast<uint8_t*>(&oldAlarm), sizeof(oldAlarm));
     fs.FileClose(&alarmFile);
 
-    // Copy old alarm to first slot
-    alarms[0] = oldAlarm;
+    // Copy old alarm to first slot and convert recurrence
     alarms[0].version = alarmFormatVersion;
+    alarms[0].hours = oldAlarm.hours;
+    alarms[0].minutes = oldAlarm.minutes;
+    alarms[0].isEnabled = oldAlarm.isEnabled;
+    // Convert RecurType to bitmask
+    switch (oldAlarm.recurrence) {
+      case RecurType::None:
+        alarms[0].recurDays = 0x00;
+        break;
+      case RecurType::Daily:
+        alarms[0].recurDays = 0x7F;
+        break;
+      case RecurType::Weekdays:
+        alarms[0].recurDays = 0x3E;
+        break;
+    }
 
     // Initialize other alarms with defaults
     for (uint8_t i = 1; i < MaxAlarms; i++) {
       alarms[i].version = alarmFormatVersion;
       alarms[i].hours = 6 + i;
       alarms[i].minutes = 0;
-      alarms[i].recurrence = RecurType::Weekdays;
+      alarms[i].recurDays = 0x3E;
       alarms[i].isEnabled = false;
     }
 
     alarmChanged = true;
     NRF_LOG_INFO("[AlarmController] Migrated alarm settings from version 1");
+  } else if (version == 2) {
+    // Old RecurType enum for version 1 & 2
+    enum class RecurType : uint8_t { None, Daily, Weekdays };
+    struct AlarmSettingsV2 {
+      uint8_t version;
+      uint8_t hours;
+      uint8_t minutes;
+      RecurType recurrence;
+      bool isEnabled;
+    };
+
+    // Migrate from version 2 multi-alarm format
+    NRF_LOG_INFO("[AlarmController] Migrating from version 2 to version 3");
+    AlarmSettingsV2 oldAlarms[MaxAlarms];
+    fs.FileRead(&alarmFile, reinterpret_cast<uint8_t*>(oldAlarms), sizeof(oldAlarms));
+    fs.FileClose(&alarmFile);
+
+    // Convert all alarms
+    for (uint8_t i = 0; i < MaxAlarms; i++) {
+      alarms[i].version = alarmFormatVersion;
+      alarms[i].hours = oldAlarms[i].hours;
+      alarms[i].minutes = oldAlarms[i].minutes;
+      alarms[i].isEnabled = oldAlarms[i].isEnabled;
+      // Convert RecurType to bitmask
+      switch (oldAlarms[i].recurrence) {
+        case RecurType::None:
+          alarms[i].recurDays = 0x00;
+          break;
+        case RecurType::Daily:
+          alarms[i].recurDays = 0x7F;
+          break;
+        case RecurType::Weekdays:
+          alarms[i].recurDays = 0x3E;
+          break;
+      }
+    }
+
+    alarmChanged = true;
+    NRF_LOG_INFO("[AlarmController] Migrated %u alarms from version 2", MaxAlarms);
   } else if (version == alarmFormatVersion) {
     // Read new multi-alarm format
     fs.FileRead(&alarmFile, reinterpret_cast<uint8_t*>(alarms.data()), sizeof(alarms));
@@ -263,14 +310,7 @@ uint8_t AlarmController::CalculateNextAlarm() const {
     tmAlarmTime->tm_min = alarms[i].minutes;
     tmAlarmTime->tm_sec = 0;
 
-    // Handle weekday-only mode
-    if (alarms[i].recurrence == RecurType::Weekdays) {
-      if (tmAlarmTime->tm_wday == 0) { // Sunday, shift 1 day
-        tmAlarmTime->tm_mday += 1;
-      } else if (tmAlarmTime->tm_wday == 6) { // Saturday, shift 2 days
-        tmAlarmTime->tm_mday += 2;
-      }
-    }
+    AdjustForRecurringDays(tmAlarmTime, alarms[i].recurDays);
     tmAlarmTime->tm_isdst = -1;
 
     auto thisAlarmTime = std::chrono::system_clock::from_time_t(std::mktime(tmAlarmTime));
@@ -283,4 +323,22 @@ uint8_t AlarmController::CalculateNextAlarm() const {
   }
 
   return nextIndex;
+}
+
+// Find next matching day in bitmask (if not all days or no days)
+void AlarmController::AdjustForRecurringDays(tm* tmAlarmTime, uint8_t recurDays) const {
+  if (recurDays != 0x00 && recurDays != 0x7F) {
+    // Not "Once" and not "Daily" - need to find next matching day
+    uint8_t daysToAdd = 0;
+    for (uint8_t i = 0; i < 7; i++) {
+      uint8_t checkDay = (tmAlarmTime->tm_wday + i) % 7;
+      if (recurDays & (1 << checkDay)) {
+        daysToAdd = i;
+        break;
+      }
+    }
+    if (daysToAdd > 0) {
+      tmAlarmTime->tm_mday += daysToAdd;
+    }
+  }
 }

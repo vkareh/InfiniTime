@@ -64,7 +64,9 @@ namespace Pinetime {
         lv_style_t launcherButtonStyle;
 
         // Config mode elements
-        lv_obj_t *btnStop, *txtStop, *btnRecur, *txtRecur, *btnInfo, *btnBack;
+        lv_obj_t *btnStop, *txtStop, *btnInfo, *enableSwitch, *btnBack;
+        lv_obj_t* dayCheckboxes[7] = {nullptr};
+        lv_obj_t* dayLabels[7] = {nullptr};
         lv_obj_t* lblampm = nullptr;
         lv_obj_t* txtMessage = nullptr;
         lv_obj_t* btnMessage = nullptr;
@@ -75,16 +77,15 @@ namespace Pinetime {
         void CreateLauncherUI();
         void CreateAlarmConfigUI(uint8_t alarmIndex);
         void DisableAlarm();
-        void SetRecurButtonState();
         void SetAlarm();
         void ShowInfo();
         void HideInfo();
-        void ToggleRecurrence();
         void UpdateAlarmTime();
         void UpdateStopProgress(lv_coord_t stopPosition);
         void ReturnToLauncher();
-        Widgets::Counter hourCounter = Widgets::Counter(0, 23, jetbrains_mono_76);
-        Widgets::Counter minuteCounter = Widgets::Counter(0, 59, jetbrains_mono_76);
+        void OnDayCheckboxChanged(uint8_t dayOfWeek);
+        Widgets::Counter hourCounter = Widgets::Counter(0, 23, jetbrains_mono_42);
+        Widgets::Counter minuteCounter = Widgets::Counter(0, 59, jetbrains_mono_42);
 
         lv_obj_t* progressStop;
         std::optional<TickType_t> stopBtnPressTime;
