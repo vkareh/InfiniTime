@@ -159,8 +159,13 @@ static void switchEventHandler(lv_obj_t* obj, lv_event_t event) {
 Alarm::Alarm(Controllers::AlarmController& alarmController,
              Controllers::Settings::ClockType clockType,
              System::SystemTask& systemTask,
-             Controllers::MotorController& motorController)
-  : alarmController {alarmController}, wakeLock(systemTask), motorController {motorController}, clockType {clockType} {
+             Controllers::MotorController& motorController,
+             Controllers::Settings& settingsController)
+  : alarmController {alarmController},
+    wakeLock(systemTask),
+    motorController {motorController},
+    settingsController {settingsController},
+    clockType {clockType} {
 
   // Decide which UI to show
   if (alarmController.IsAlerting()) {
@@ -497,7 +502,7 @@ void Alarm::SetAlerting() {
   hourCounter.HideControls();
   minuteCounter.HideControls();
   lv_obj_set_hidden(btnStop, false);
-  taskStopAlarm = lv_task_create(StopAlarmTaskCallback, pdMS_TO_TICKS(60 * 1000), LV_TASK_PRIO_MID, this);
+  taskStopAlarm = lv_task_create(StopAlarmTaskCallback, pdMS_TO_TICKS(600 * 1000), LV_TASK_PRIO_MID, this);
   motorController.StartRinging();
   wakeLock.Lock();
 }
@@ -515,6 +520,13 @@ void Alarm::StopAlerting() {
   minuteCounter.ShowControls();
   lv_obj_set_hidden(btnInfo, false);
   lv_obj_set_hidden(btnBack, false);
+
+  // Move out of sleep mode
+  if (settingsController.GetNotificationStatus() == Controllers::Settings::Notification::Sleep) {
+    settingsController.SetNotificationStatus(Controllers::Settings::Notification::On);
+  }
+
+  running = false; // Return to watchface on dismiss
 }
 
 void Alarm::ShowInfo() {
