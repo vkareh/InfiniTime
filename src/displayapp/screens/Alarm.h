@@ -47,7 +47,7 @@ namespace Pinetime {
         System::WakeLock wakeLock;
         Controllers::MotorController& motorController;
 
-        lv_obj_t *btnStop, *txtStop, *btnRecur, *txtRecur, *btnInfo, *enableSwitch;
+        lv_obj_t *btnStop, *txtStop, *btnSnooze, *txtSnooze, *btnRecur, *txtRecur, *btnInfo, *enableSwitch;
         lv_obj_t* lblampm = nullptr;
         lv_obj_t* txtMessage = nullptr;
         lv_obj_t* btnMessage = nullptr;
@@ -62,6 +62,7 @@ namespace Pinetime {
         void HideInfo();
         void ToggleRecurrence();
         void UpdateAlarmTime();
+        void SnoozeAlarm();
         Widgets::Counter hourCounter = Widgets::Counter(0, 23, jetbrains_mono_76);
         Widgets::Counter minuteCounter = Widgets::Counter(0, 59, jetbrains_mono_76);
       };

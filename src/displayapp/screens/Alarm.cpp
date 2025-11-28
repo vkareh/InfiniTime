@@ -74,11 +74,21 @@ Alarm::Alarm(Controllers::AlarmController& alarmController,
   lv_label_set_text_static(colonLabel, ":");
   lv_obj_align(colonLabel, lv_scr_act(), LV_ALIGN_CENTER, 0, -29);
 
+  btnSnooze = lv_btn_create(lv_scr_act(), nullptr);
+  btnSnooze->user_data = this;
+  lv_obj_set_event_cb(btnSnooze, btnEventHandler);
+  lv_obj_set_size(btnSnooze, 115, 70);
+  lv_obj_align(btnSnooze, lv_scr_act(), LV_ALIGN_IN_BOTTOM_LEFT, 0, 0);
+  lv_obj_set_style_local_bg_color(btnSnooze, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, Colors::orange);
+  txtSnooze = lv_label_create(btnSnooze, nullptr);
+  lv_label_set_text_static(txtSnooze, Symbols::snooze);
+  lv_obj_set_hidden(btnSnooze, true);
+
   btnStop = lv_btn_create(lv_scr_act(), nullptr);
   btnStop->user_data = this;
   lv_obj_set_event_cb(btnStop, btnEventHandler);
-  lv_obj_set_size(btnStop, 240, 70);
-  lv_obj_align(btnStop, lv_scr_act(), LV_ALIGN_IN_BOTTOM_LEFT, 0, 0);
+  lv_obj_set_size(btnStop, 115, 70);
+  lv_obj_align(btnStop, lv_scr_act(), LV_ALIGN_IN_BOTTOM_RIGHT, 0, 0);
   lv_obj_set_style_local_bg_color(btnStop, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_RED);
   txtStop = lv_label_create(btnStop, nullptr);
   lv_label_set_text_static(txtStop, Symbols::stop);
@@ -145,6 +155,10 @@ void Alarm::OnButtonEvent(lv_obj_t* obj, lv_event_t event) {
       StopAlerting();
       return;
     }
+    if (obj == btnSnooze) {
+      SnoozeAlarm();
+      return;
+    }
     if (obj == btnInfo) {
       ShowInfo();
       return;
@@ -207,7 +221,10 @@ void Alarm::SetAlerting() {
   lv_obj_set_hidden(btnInfo, true);
   hourCounter.HideControls();
   minuteCounter.HideControls();
+
+  lv_obj_set_hidden(btnSnooze, false);
   lv_obj_set_hidden(btnStop, false);
+
   taskStopAlarm = lv_task_create(StopAlarmTaskCallback, pdMS_TO_TICKS(60 * 1000), LV_TASK_PRIO_MID, this);
   motorController.StartRinging();
   wakeLock.Lock();
@@ -222,12 +239,28 @@ void Alarm::StopAlerting() {
     taskStopAlarm = nullptr;
   }
   wakeLock.Release();
+
+  lv_obj_set_hidden(btnSnooze, true);
   lv_obj_set_hidden(btnStop, true);
+
   hourCounter.ShowControls();
   minuteCounter.ShowControls();
   lv_obj_set_hidden(btnInfo, false);
   lv_obj_set_hidden(btnRecur, false);
   lv_obj_set_hidden(enableSwitch, false);
+}
+
+void Alarm::SnoozeAlarm() {
+  alarmController.SnoozeAlarm();
+  motorController.StopRinging();
+  if (taskStopAlarm != nullptr) {
+    lv_task_del(taskStopAlarm);
+    taskStopAlarm = nullptr;
+  }
+  wakeLock.Release();
+
+  // Return to watch face and let watch go back to sleep
+  running = false;
 }
 
 void Alarm::SetSwitchState(lv_anim_enable_t anim) {

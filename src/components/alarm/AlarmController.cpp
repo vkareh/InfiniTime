@@ -134,6 +134,20 @@ void AlarmController::StopAlerting() {
   }
 }
 
+void AlarmController::SnoozeAlarm() {
+  isAlerting = false;
+
+  // Schedule snooze timer for 9 minutes
+  static constexpr uint32_t snoozeSeconds = 9 * 60;
+  xTimerStop(alarmTimer, 0);
+  xTimerChangePeriod(alarmTimer, snoozeSeconds * configTICK_RATE_HZ, 0);
+  xTimerStart(alarmTimer, 0);
+
+  // Update time for the current alarm display
+  auto now = dateTimeController.CurrentDateTime();
+  alarmTime = now + std::chrono::seconds(snoozeSeconds);
+}
+
 void AlarmController::SetRecurrence(RecurType recurrence) {
   if (alarm.recurrence != recurrence) {
     alarm.recurrence = recurrence;

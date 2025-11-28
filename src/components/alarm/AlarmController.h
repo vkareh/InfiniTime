@@ -63,6 +63,7 @@ namespace Pinetime {
       }
 
       void SetRecurrence(RecurType recurrence);
+      void SnoozeAlarm();
 
     private:
       // Versions 255 is reserved for now, so the version field can be made
