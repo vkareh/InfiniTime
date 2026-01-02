@@ -33,10 +33,6 @@ namespace {
            (static_cast<uint64_t>(data[5]) << 40) + (static_cast<uint64_t>(data[6]) << 48) + (static_cast<uint64_t>(data[7]) << 56);
   }
 
-  uint16_t ToUInt16(const uint8_t* data) {
-    return data[0] + (data[1] << 8);
-  }
-
   int16_t ToInt16(const uint8_t* data) {
     return data[0] + (data[1] << 8);
   }
@@ -45,11 +41,39 @@ namespace {
     SimpleWeatherService::Location cityName;
     std::memcpy(cityName.data(), &dataBuffer[16], 32);
     cityName[32] = '\0';
-    uint16_t sunrise = 0;
-    uint16_t sunset = 0;
+    int16_t sunrise = -1;
+    int16_t sunset = -1;
     if (dataBuffer[1] > 0) {
-      sunrise = ToUInt16(&dataBuffer[49]);
-      sunset = ToUInt16(&dataBuffer[51]);
+      int16_t bufferSunrise = ToInt16(&dataBuffer[49]);
+      int16_t bufferSunset = ToInt16(&dataBuffer[51]);
+
+      // Sunrise/sunset format
+
+      // Assume sun is down at minute 0 / midnight
+
+      // 0<=x<1440 sunrise happens this many minutes into the day
+      // (0 day starts with sun up)
+      // -1 unknown
+      // -2 sun not rising today
+
+      // 0<x<1440 sunset happens this many minutes into the day
+      // -1 unknown
+      // -2 sun not setting today
+
+      // Check if the weather data is well formed
+      // Disable boolean simplification suggestion, as simplifying it makes it unreadable
+      if (!( // NOLINT(readability-simplify-boolean-expr)
+             // Fail if either unknown
+            (bufferSunrise == -1 || bufferSunset == -1)
+            // Cannot be out of range
+            || (bufferSunrise < -2 || bufferSunrise > 1439 || bufferSunset < -2 || bufferSunset > 1439)
+            // Cannot have sunset without sunrise
+            || (bufferSunrise == -2 && bufferSunset != -2)
+            // Cannot have sunset before sunrise
+            || (bufferSunrise >= bufferSunset && bufferSunrise >= 0 && bufferSunset >= 0))) {
+        sunrise = bufferSunrise;
+        sunset = bufferSunset;
+      }
     }
     return SimpleWeatherService::CurrentWeather(ToUInt64(&dataBuffer[2]),
                                                 SimpleWeatherService::Temperature(ToInt16(&dataBuffer[10])),
@@ -169,7 +193,7 @@ std::optional<SimpleWeatherService::Forecast> SimpleWeatherService::GetForecast(
 }
 
 bool SimpleWeatherService::IsNight() const {
-  if (currentWeather && currentWeather->sunrise > 0 && currentWeather->sunset > 0) {
+  if (currentWeather && currentWeather->sunrise != -1 && currentWeather->sunset != -1) {
     auto currentTime = dateTimeController.CurrentDateTime().time_since_epoch();
 
     // Get timestamp for last midnight
@@ -178,7 +202,17 @@ bool SimpleWeatherService::IsNight() const {
     // Calculate minutes since midnight
     auto currentMinutes = std::chrono::duration_cast<std::chrono::minutes>(currentTime - midnight).count();
 
-    return currentMinutes < currentWeather->sunrise || currentMinutes > currentWeather->sunset;
+    // Sun not rising today => night all hours
+    if (currentWeather->sunrise == -2) {
+      return true;
+    }
+    // Sun not setting today => check before sunrise
+    if (currentWeather->sunset == -2) {
+      return currentMinutes < currentWeather->sunrise;
+    }
+
+    // Before sunrise or after sunset
+    return currentMinutes < currentWeather->sunrise || currentMinutes >= currentWeather->sunset;
   }
 
   return false;
