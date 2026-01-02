@@ -45,8 +45,13 @@ The byte array must contain the following data:
    - 6 = Thunderstorm
    - 7 = Snow
    - 8 = Mist, smog
-  - [49, 50] : Sunrise (16 bits, number of minutes elapsed since midnight)
-  - [51, 52] : Sunset (16 bits, number of minutes elapsed since midnight)
+  - [49, 50] : Sunrise (number of minutes elapsed since midnight)
+    - `0` sun already up when day starts
+    - `-1` unknown
+    - `-2` no sunrise (e.g. polar night)
+  - [51, 52] : Sunset (number of minutes elapsed since midnight)
+    - `-1` unknown
+    - `-2` no sunset (e.g. polar day)
 
 ### Forecast
 
