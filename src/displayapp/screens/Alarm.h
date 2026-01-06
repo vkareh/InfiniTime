@@ -34,7 +34,8 @@ namespace Pinetime {
         explicit Alarm(Controllers::AlarmController& alarmController,
                        Controllers::Settings::ClockType clockType,
                        System::SystemTask& systemTask,
-                       Controllers::MotorController& motorController);
+                       Controllers::MotorController& motorController,
+                       Controllers::Settings& settingsController);
         ~Alarm() override;
         void Refresh() override;
         void SetAlerting();
@@ -51,6 +52,7 @@ namespace Pinetime {
         Controllers::AlarmController& alarmController;
         System::WakeLock wakeLock;
         Controllers::MotorController& motorController;
+        Controllers::Settings& settingsController;
         Controllers::Settings::ClockType clockType;
 
         bool launcherMode = true;
@@ -104,7 +106,8 @@ namespace Pinetime {
         return new Screens::Alarm(controllers.alarmController,
                                   controllers.settingsController.GetClockType(),
                                   *controllers.systemTask,
-                                  controllers.motorController);
+                                  controllers.motorController,
+                                  controllers.settingsController);
       };
 
       static bool IsAvailable(Pinetime::Controllers::FS& /*filesystem*/) {

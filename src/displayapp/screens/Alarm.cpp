@@ -159,8 +159,13 @@ static void switchEventHandler(lv_obj_t* obj, lv_event_t event) {
 Alarm::Alarm(Controllers::AlarmController& alarmController,
              Controllers::Settings::ClockType clockType,
              System::SystemTask& systemTask,
-             Controllers::MotorController& motorController)
-  : alarmController {alarmController}, wakeLock(systemTask), motorController {motorController}, clockType {clockType} {
+             Controllers::MotorController& motorController,
+             Controllers::Settings& settingsController)
+  : alarmController {alarmController},
+    wakeLock(systemTask),
+    motorController {motorController},
+    settingsController {settingsController},
+    clockType {clockType} {
 
   // Decide which UI to show
   if (alarmController.IsAlerting()) {
@@ -351,7 +356,6 @@ void Alarm::Refresh() {
     if (elapsed >= longPressTimeout) {
       ResetStopProgress();
       StopAlerting();
-      ReturnToLauncher();
     } else {
       lv_coord_t stopPosition = (elapsed * progressBarSize) / longPressTimeout;
       UpdateStopProgress(stopPosition);
@@ -386,6 +390,7 @@ Alarm::~Alarm() {
   lv_task_del(taskRefresh);
   lv_obj_clean(lv_scr_act());
   alarmController.SaveAlarm();
+  settingsController.SaveSettings();
 }
 
 void Alarm::DisableAlarm() {
@@ -469,7 +474,6 @@ bool Alarm::OnButtonPushed() {
   }
   if (alarmController.IsAlerting()) {
     StopAlerting();
-    ReturnToLauncher();
     return true;
   }
   // Hardware button returns to launcher in config mode
@@ -512,7 +516,7 @@ void Alarm::SetAlerting() {
   hourCounter.HideControls();
   minuteCounter.HideControls();
   lv_obj_set_hidden(btnStop, false);
-  taskStopAlarm = lv_task_create(StopAlarmTaskCallback, pdMS_TO_TICKS(60 * 1000), LV_TASK_PRIO_MID, this);
+  taskStopAlarm = lv_task_create(StopAlarmTaskCallback, pdMS_TO_TICKS(600 * 1000), LV_TASK_PRIO_MID, this);
   motorController.StartRinging();
   wakeLock.Lock();
 }
@@ -526,6 +530,13 @@ void Alarm::StopAlerting() {
   }
   wakeLock.Release();
   lv_indev_wait_release(lv_indev_get_act());
+
+  // Move out of sleep mode
+  if (settingsController.GetNotificationStatus() == Controllers::Settings::Notification::Sleep) {
+    settingsController.SetNotificationStatus(Controllers::Settings::Notification::On);
+  }
+
+  running = false; // Return to watchface on dismiss
 }
 
 void Alarm::SetSwitchState(lv_anim_enable_t anim) {
