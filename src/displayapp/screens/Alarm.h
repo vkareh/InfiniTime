@@ -34,7 +34,8 @@ namespace Pinetime {
         explicit Alarm(Controllers::AlarmController& alarmController,
                        Controllers::Settings::ClockType clockType,
                        System::SystemTask& systemTask,
-                       Controllers::MotorController& motorController);
+                       Controllers::MotorController& motorController,
+                       Controllers::Settings& settingsController);
         ~Alarm() override;
         void Refresh() override;
         void SetAlerting();
@@ -50,6 +51,8 @@ namespace Pinetime {
         Controllers::AlarmController& alarmController;
         System::WakeLock wakeLock;
         Controllers::MotorController& motorController;
+        Controllers::Settings::ClockType clockType;
+        Controllers::Settings& settingsController;
 
         lv_obj_t *btnStop, *txtStop, *btnRecur, *txtRecur, *btnInfo, *enableSwitch;
         lv_obj_t* lblampm = nullptr;
@@ -87,7 +90,8 @@ namespace Pinetime {
         return new Screens::Alarm(controllers.alarmController,
                                   controllers.settingsController.GetClockType(),
                                   *controllers.systemTask,
-                                  controllers.motorController);
+                                  controllers.motorController,
+                                  controllers.settingsController);
       };
 
       static bool IsAvailable(Pinetime::Controllers::FS& /*filesystem*/) {
