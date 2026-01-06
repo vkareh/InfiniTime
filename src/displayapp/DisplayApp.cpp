@@ -469,8 +469,10 @@ void DisplayApp::Refresh() {
         LoadNewScreen(Apps::SysInfo, DisplayApp::FullRefreshDirections::Up);
         break;
       case Messages::ButtonDoubleClicked:
-        if (currentApp != Apps::Notifications && currentApp != Apps::NotificationsPreview) {
-          LoadNewScreen(Apps::Notifications, DisplayApp::FullRefreshDirections::Down);
+        if (currentApp != Apps::FlashLight) {
+          LoadNewScreen(Apps::FlashLight, DisplayApp::FullRefreshDirections::None);
+          auto* flashlight = static_cast<Screens::FlashLight*>(currentScreen.get());
+          flashlight->Toggle(); // Turn flashlight on
         }
         break;
 
